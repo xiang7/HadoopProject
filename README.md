@@ -12,3 +12,12 @@ Hadoop version
 5. run data cleaning + lda get the result and time
 
 report
+
+Current:
+Luojie: 
+1. set master node 75 76 77
+2. data cleaning steps - DataCleaning.java
+
+Junchao:
+1. data cleaning steps - DataCleaning.java
+2. set worker node
