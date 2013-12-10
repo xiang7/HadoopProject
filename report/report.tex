@@ -1,6 +1,4 @@
 \documentclass{article}
-
-
 \begin{document}
 
 \title{Project Report}
@@ -8,11 +6,32 @@
 \date{}
 \maketitle
 
-\section{Hadoop Setup}
+\section{Introduction}
+In this project, we will extract the topics from a corpus collected from Stack Overflow using Latent Dirichlet Allocation (LDA) on a hadoop cluster. LDA is a statistical model for discovering underlying topics from a collection of documents \cite{blei2003latent}. 
 
-Describes how we set up our 6 node hadoop cluster.
+\section{Experiment}
+\subsection{Dataset}
+The dataset of this project is obtained from Kaggle (www.kaggle.com), which is a platform for data analysis and prediction competitions. The data that we use are posted by Facebook for a keyword extraction competition. The dataset consists the files both for training and testing, of which the training file contains four columns id, title, body, and tags. In this project, only the title and body are used to extract the topics.\\[10pt]
+Example:
+\begin{verbatim}
+id: 1
 
-\section{Data Cleaning}
+title: How to check if an uploaded file is an image without mime type?
+
+content:
+
+<p>I'd like to check if an uploaded file is an image file (e.g png, jpg, 
+jpeg, gif, bmp) or another file. The problem is that I'm using Uploadify 
+to upload the files, which changes the mime type and gives a 'text/octal' 
+or something as the mime type, no matter which file type you upload.</p>
+
+<p>Is there a way to check if the uploaded file is an image apart from
+ checking the file extension using PHP?</p>
+
+tags: php image-processing file-upload upload mime-types
+\end{verbatim}
+
+\subsection{Data Cleaning}
 
 Describes the steps we take to do data cleaning.
 
@@ -29,7 +48,15 @@ Remove multiple white spaces \verb-"\s+" to " "-
 Remove words shorter than length 3
 
 Turn all letters to lowercase
+\subsection{Hadoop Setup}
 
+Describes how we set up our 6 node hadoop cluster.
 
+\subsection{Latent Dirichlet Allocation}
 
+\subsection{Results}
+
+\section{Conclusion}
+\bibliographystyle{plain}
+\bibliography{ref}
 \end{document}
