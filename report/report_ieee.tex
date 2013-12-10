@@ -347,6 +347,7 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
+\usepackage{verbatim}
 
 \begin{document}
 %
@@ -358,22 +359,17 @@
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{\IEEEauthorblockN{Michael Shell}
-\IEEEauthorblockA{School of Electrical and\\Computer Engineering\\
-Georgia Institute of Technology\\
-Atlanta, Georgia 30332--0250\\
-Email: http://www.michaelshell.org/contact.html}
+\author{\IEEEauthorblockN{Luojie Xiang}
+\IEEEauthorblockA{Department of Computer Science\\
+Purdue University\\
+West Lafayette, Indiana, USA\\
+Email: xiang7@purdue.edu}
 \and
-\IEEEauthorblockN{Homer Simpson}
-\IEEEauthorblockA{Twentieth Century Fox\\
-Springfield, USA\\
-Email: homer@thesimpsons.com}
-\and
-\IEEEauthorblockN{James Kirk\\ and Montgomery Scott}
-\IEEEauthorblockA{Starfleet Academy\\
-San Francisco, California 96678-2391\\
-Telephone: (800) 555--1212\\
-Fax: (888) 555--1212}}
+\IEEEauthorblockN{Junchao Yan}
+\IEEEauthorblockA{Department of Computer and Information Technology\\
+Purdue University\\
+West Lafayette, Indiana, USA\\
+Email: yan114@purdue.edu}}
 
 % conference papers do not typically use \thanks and this command
 % is locked out in conference mode. If really needed, such as for
@@ -439,24 +435,145 @@ The abstract goes here.
 
 
 \section{Introduction}
-% no \IEEEPARstart
-This demo file is intended to serve as a ``starter file''
-for IEEE conference papers produced under \LaTeX\ using
-IEEEtran.cls version 1.7 and later.
-% You must have at least 2 lines in the paragraph with the drop letter
-% (should never be an issue)
-I wish you the best of success.
+In this project, we will extract the topics from a corpus collected from Stack Overflow using Latent Dirichlet Allocation (LDA) on a hadoop cluster. LDA is a statistical model for discovering underlying topics from a collection of documents \cite{blei2003latent}. 
 
-\hfill mds
- 
-\hfill January 11, 2007
+\section{Experiment}
+\subsection{Dataset}
+The dataset of this project is obtained from Kaggle (www.kaggle.com), which is a platform for data analysis and prediction competitions. The data that we use are posted by Facebook for a keyword extraction competition. The dataset consists the files both for training and testing, of which the training file contains four columns id, title, body, and tags. In this project, only the title and body are used to extract the topics.\\[10pt]
+Example:
+\begin{quote}
 
-\subsection{Subsection Heading Here}
-Subsection text here.
+\textbf{id}: 1
+
+\textbf{title}: How to check if an uploaded file is an image without mime type?
+
+\textbf{content}:
+
+I'd like to check if an uploaded file is an image file (e.g png, jpg,  jpeg, gif, bmp) or another file. The problem is that I'm using Uploadify  to upload the files, which changes the mime type and gives a 'text/octal'  or something as the mime type, no matter which file type you upload.
 
 
-\subsubsection{Subsubsection Heading Here}
-Subsubsection text here.
+Is there a way to check if the uploaded file is an image apart from checking the file extension using PHP?
+
+\textbf{tags}: php image-processing file-upload upload mime-types
+\end{quote}
+
+\subsection{Hadoop Setup}
+
+The hadoop cluster contains six nodes including one masternode and five slavenodes. To set up the hadoop cluster, we first configured the hosts file as shown below.
+
+\begin{verbatim}
+192.168.65.70 masternode
+192.168.65.71 slavenode1
+192.168.65.72 slavenode2
+192.168.65.75 slavenode3
+192.168.65.76 slavenode4
+192.168.65.77 slavenode5
+\end{verbatim}
+
+To configure the hadoop accordingly, we updated the \verb+conf/masters+ and \verb+conf/slaves+ files on the master node as shown below.\\[10pt]
+\verb+conf/masters+ on the master node:
+\begin{verbatim}
+masternode
+\end{verbatim}\\
+\verb+conf/slaves+ one the master node:
+\begin{verbatim}
+slavenode1
+slavenode2
+slavenode3
+slavenode4
+slavenode5
+\end{verbatim}
+
+In addition, configuration files \verb+conf/core-site.xml+, \verb+conf/mapred-site.xml+, and \verb+conf/hdfs-site.xml+ were modified on all the nodes as shown below.\\[10pt]
+\verb+conf/core-site.xml+ on all the nodes:
+
+\begin{verbatim}
+<configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://masternode:9000</value>
+<description>Enter your NameNode hostname
+</description>
+</property>
+<property>       
+<name>fs.checkpoint.dir</name>       
+<value>/home/student/DAT500/fs/hdfs/snn
+</value>
+<description>A comma separated list of paths.
+ Use the list of directories</description>
+</property>
+<property>       
+<name>hadoop.tmp.dir</name>       
+<value>/home/student/DAT500/fs/tmp</value>  
+<description>Comma separated list of paths
+</description>
+</property>
+</configuration>
+\end{verbatim}\\[10pt]
+\verb+conf/mapred-site.xml+ on all the nodes:
+\begin{verbatim}
+<configuration>
+<property>
+<name>mapred.job.tracker</name>
+<value>masternode:9001</value>
+<description>Enter your JobTracker hostname
+</description>
+</property>
+<property>       
+<name>mapred.local.dir</name>       
+<value>/home/student/DAT500/fs/tmp/mapred/
+local</value>  
+<description>Comma separated list of paths
+</description>
+</property>
+</configuration>
+\end{verbatim}\\[10pt]
+\verb+conf/hdfs-site.xml+ on all the nodes:
+\begin{verbatim}
+<configuration>
+<property>       
+<name>dfs.name.dir</name>       
+<value>/home/student/DAT500/fs/hdfs/nn
+</value>  
+<description>Comma separated list of paths
+</description>
+</property>
+<property>       
+<name>dfs.data.dir</name>       
+<value>/home/student/DAT500/fs/hdfs/dn
+</value>  
+<description>Comma separated list of paths
+</description>
+</property>
+<property>
+<name>dfs.replication</name>
+<value>2</value>
+</property>
+</configuration>
+\end{verbatim}
+
+\subsection{Data Cleaning}
+
+Describes the steps we take to do data cleaning.
+
+remove content within \verb+<code>+
+
+remove tags \verb+"<[^>]*>"+
+
+Remove punctuation \verb+"[!@#$%^&*()-\_:;"'?/.,<>]"+
+
+Remove new lines \verb+"\n" to ""+
+
+Remove multiple white spaces \verb-"\s+" to " "-
+
+Remove words shorter than length 3
+
+Turn all letters to lowercase
+
+
+\subsection{Latent Dirichlet Allocation}
+
+\subsection{Results}
 
 
 % An example of a floating figure using the graphicx package.
@@ -586,9 +703,10 @@ The authors would like to thank...
 % (used to reserve space for the reference number labels box)
 \begin{thebibliography}{1}
 
-\bibitem{IEEEhowto:kopka}
-H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
-  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+\bibitem{blei2003latent}
+David~M Blei, Andrew~Y Ng, and Michael~I Jordan.
+\newblock Latent dirichlet allocation.
+\newblock {\em the Journal of machine Learning research}, 3:993--1022, 2003.
 
 \end{thebibliography}
 
