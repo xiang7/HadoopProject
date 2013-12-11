@@ -554,27 +554,16 @@ local</value>
 
 \subsection{Data Cleaning}
 
-Describes the steps we take to do data cleaning.
+Due to the nature of the stack overflow platform, the posts come in various forms. Most posts has weird characters, huge amount of numbers and texts that's not natural language, representing mathematical formulations, program codes and also program or compiling outputs. For example, a lot of questions are asked about a certain compilation error or run time error, which very commonly contains a very long sequence of error report such as stack trace. These text do includes huge amount of text however, they're machine generated output and can be very confusing to the LDA training process. Therefore, we perform a certain steps of preprocessing before we actually run LDA. This not only prevent the unneccesary alements of the posts from confusing the training process but also reduce the data size tremendously.
 
-keep only title and body  ("id","title","body","tags"'\n' all fields can have newlines within)
-
-remove content within \verb+<code>+
-
-remove tags \verb+"<[^>]*>"+
-
-Remove punctuation \verb+"[!@#$%^&*()-\_:;"'?/.,<>]"+
-
-Remove new lines \verb+"\n" to ""+
-
-Remove multiple white spaces \verb-"\s+" to " "-
-
-Turn all letters to lowercase
-
-algorithm:
-
-getField - read one field with staring " and ending ", don't stop when "" is met
-
-getField four times and the ending new line. ignore the first and the last. for the two fields left, run the steps above
+\begin{itemize}
+	\item \textbf{Retrieve related fields.} The original data comes in a csv file with four fields for each record: id, title, body, tag. Since we want to find out the popular topics among the posts, we want to use the text-rich segments (title and body). Tag is essentially the topic in a sense (tags are mostly about what technology the post is asking like a certain programming language). This can be used as the gold standard later to evaluate the topics we found. Thus, we eliminate them for the training process. 
+	\item \textbf{Remove contents in <code></code>.} The <code></code> tag contains a lot of mathematical formulations, machine generated text etc. Since they're not helpful in finding topics, we eliminate them.
+	\item \textbf{Remove tags.} Tags like <p></p> have a large frequency whereas they have no contribution to any topics. So they're all removed.
+	\item \textbf{Remove punctuations.} Removing punctuations helps greatly with reducing the feature space. If punctuations are not removed, "happy", "happy." and "happy," would be regarded as different words whereas they should be the same.
+	\item \textbf{Lowercase the text.} Lowercase the entire text also helps with reducing feature space since otherwise "happy" and "hapPy" would be regarded as different.
+	\item \textbf{Remove newlines and excessive white spaces.}. Since the preprocessed text will be fed into mahout later and text is segmented into words by white space in mahout. Therefore, this would guarantee mahout segments words correctly.
+\end{itemize}
 
 
 \subsection{Latent Dirichlet Allocation}
