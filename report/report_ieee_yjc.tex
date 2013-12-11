@@ -193,7 +193,7 @@
 
 % *** SPECIALIZED LIST PACKAGES ***
 %
-%\usepackage{algorithmic}
+\usepackage{algorithmic}
 % algorithmic.sty was written by Peter Williams and Rogerio Brito.
 % This package provides an algorithmic environment fo describing algorithms.
 % You can use the algorithmic environment in-text or within a figure
@@ -350,6 +350,7 @@
 \usepackage{verbatim}
 \usepackage{amsmath}
 \usepackage{graphicx}
+\usepackage{algorithm}
 
 \begin{document}
 %
@@ -477,7 +478,48 @@ Given the posterior distribution, the probability of a word based on topics $\ha
 However, the distribution can not be solved in a polynomial time because of the integrals. Therefore, approximation methods are used to address this computational problem. Several approximation methods have been proposed for LDA including Gibbs sampling \cite{steyvers2007probabilistic}, mean field variational inference \cite{blei2003latent}, collapsed variational inference \cite{teh2006collapsed}, and expectation propagation \cite{minka2002expectation}. In this study, we are focusing on the variational inference approach for LDA.
 
 
-The mean field variational inference
+The the idea of mean field variational inference is to fit the variational parameters so that the variational distribution $q$ can approximate the true posterior distribution.
+\begin{equation}
+\begin{split}
+q(\overrightarrow{\theta}_{1:D},z_{1:D,1:N},\overrightarrow{\beta}_{1:K}|w_{1:D,1:N})=\\
+\prod_{k=1}^{K}{q(\overrightarrow{\beta}_k|\overrightarrow{\lambda}_k)}\prod_{d=1}^{D}\left({q(\overrightarrow{\theta}_{dd}|\overrightarrow{\gamma}_d)}\prod_{k=1}^{K}{q(z_{d,n}|\overrightarrow{\phi}_{d,n})}\right)
+\end{split}
+\end{equation}
+
+The difference between mean field variational distribution and true posterior distribution is that the variables of the former are independent, which are determined by different variational parameters. By minimize the Kullback-Leibler (KL) between variational distribution and true posterior distribution, we can get the fitted variational parameters.
+
+\begin{equation}
+\begin{split}
+\arg \min_{\overrightarrow{\lambda}_{1:K},\overrightarrow{\gamma}_{1:D},\overrightarrow{\phi}_{1:D,1:N}} KL(q(\overrightarrow{\theta}_{1:D},z_{1:D,1:N},\overrightarrow{\beta}_{1:K}|w_{1:D,1:N})\\
+||p(\overrightarrow{\theta}_{1:D},z_{1:D,1:N},\overrightarrow{\beta}_{1:K}|w_{1:D,1:N},\alpha,\eta))
+\end{split}
+\end{equation}
+
+The objective function is
+\begin{equation}
+\begin{split}
+L = \sum_{k=1}^{K}E[\log p(\overrightarrow{\beta}_{k}|\eta)]+
+\sum_{d=1}^{D}{E[\log p(\overrightarrow{\theta}_d|\overrightarrow{\alpha})]} \\
++ \sum_{d=1}^{D}\sum_{n=1}^{N}{E[\log p(Z_{d,n}|\overrightarrow{\theta}_d)]} \\
++ \sum_{d=1}^{D}\sum_{n=1}^{N}{E[\log p(w_{d,n}|Z_{d,n},\overrightarrow{\beta}_{1:K})]}+H(q)
+\end{split}
+\end{equation}
+
+Coordinate Ascent algorithm is used to iteratively optimize the variational parameters until the objective function converges. A high level view of Coordinate Ascent algorithm is summarized as below \cite{caa}. 
+\begin{algorithm}
+\caption{Coordinate Ascent Algorithm}
+\label{alg:lda}
+\begin{algorithmic}
+    \REQUIRE Initialize global parameters $\lambda$
+\REPEAT
+    \FOR{each document $d \in \{1,\ldots,D\}$}
+	\STATE{Update document-specific variational distributions}
+    \ENDFOR
+    \STATE{Update global parameters $\lambda$}
+\UNTIL{Convergence}
+\end{algorithmic}
+\end{algorithm}
+
 
 \begin{figure*}[!t]
 \centering
@@ -496,14 +538,14 @@ As shown in Table \ref{lda_comp}, a comparison of different approaches for LDA w
 \centering
 \begin{tabular}{lll}\hline
 Approach  & Framework        & Inference                     \\ \hline
-Mallet    & Multi-thread     & Gibbs                         \\
-GPU-LDA   & GPU              & Gibss \& Variational Bayesian \\
-Async-LDA & Multi-thread     & Gibbs                         \\
-N.C.L.    & Master-Slave     & Variational Bayesian          \\
-pLDA      & MPI \& MapReduce & Gibbs                         \\
-Y!LDA     & Hadoop           & Gibbs                         \\
-Mahout    & MapReduce        & Variational Bayesian          \\
-Mr. LDA   & MapReduce        & Variational Bayesian         \\\hline
+Mallet \cite{mallet}   & Multi-thread     & Gibbs                         \\
+GPU-LDA \cite{yan2009parallel}   & GPU              & Gibss \& Variational Bayesian \\
+Async-LDA \cite{smyth2008asynchronous} & Multi-thread     & Gibbs                         \\
+N.C.L. \cite{mariote2007parallelized}   & Master-Slave     & Variational Bayesian          \\
+pLDA \cite{wang2009plda}     & MPI \& MapReduce & Gibbs                         \\
+Y!LDA \cite{smola2010architecture}    & Hadoop           & Gibbs                         \\
+Mahout \cite{mahout_lda}   & MapReduce        & Variational Bayesian          \\
+Mr. LDA \cite{zhai2012mr}   & MapReduce        & Variational Bayesian         \\\hline
 \end{tabular}
 \end{table}
 
@@ -651,7 +693,6 @@ Due to the nature of the stack overflow platform, the posts come in various form
 	\item \textbf{Lowercase the text.} Lowercase the entire text also helps with reducing feature space since otherwise "happy" and "hapPy" would be regarded as different.
 	\item \textbf{Remove newlines and excessive white spaces.}. Since the preprocessed text will be fed into mahout later and text is segmented into words by white space in mahout. Therefore, this would guarantee mahout segments words correctly.
 \end{itemize}
-\subsection{Latent Dirichlet Allocation}
 
 \subsection{Results}
 
