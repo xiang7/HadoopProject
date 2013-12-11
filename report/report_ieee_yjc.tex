@@ -739,8 +739,23 @@ Due to the nature of the stack overflow platform, the posts come in various form
 	\item \textbf{Remove newlines and excessive white spaces.}. Since the preprocessed text will be fed into mahout later and text is segmented into words by white space in mahout. Therefore, this would guarantee mahout segments words correctly.
 \end{itemize}
 
-\subsection{Experiment}
+\subsection{Local Experiment}
 
+Local experiement is a sequential execution of all essential steps. There are three major steps:
+
+\begin{itemize}
+	\item \textbf{Preprocessing.} Preprocessing the text with the steps described in the previous section. The output is a single file with individual documents taking one line in the file.
+	\item \textbf{LDA input preparation.} Mahout's LDA takes a specific form of input. It comes with a utility to turn a text file into sequence of entries and then process them further into numeric vectors which is the input form of LDA model training. Therefore, the output from the prepocessing step need to be turned into a form of one entry per physical file which is the input format of the utility function of mahout.
+	\item \textbf{LDA model training.} After the input of LDA model training is prepared, it is inputed into mahout and an LDA model will be trained. A utility function is provided within mahout to provide transformation from numerical vectors into original words. We wrote a simple function to extract words with the highest scores in each topic and the result is shown in next section.
+\end{itemize}
+
+\subsection{Hadoop Experiment}
+
+Hadoop experiment uses MapReduce to do all the three steps in local experiment.
+
+For the preprocessing, since each document is preprocessed in exactly the same way and the preprocessing of each document is independent. Thus, this perfectly fits into MapReduce platform. We adapted the local preprocessing code to fit the MapReduce framework. A mapper takes in a chunck of text, splits it into entries and then preprocess each entry. A sampling is performed during emittion, the reason is explained in results session. We only emit the preprocessed entry by a predefined probability. The reducer putss each entry into a separate file.
+
+For the LDA input preparation and LDA model training, MapReduce framework is already supported in mahout. The only thing difference is we use a different set of commands with hadoop. 
 \subsection{Results}
 
 We ran the LDA on the preprocessed text. We do a sampling during preprocessing the text because using all the entries for training a LDA model would be too much both in terms of storage space and also time. Further, according to Blei etc. \cite{blei2003latent}, LDA model performance plateaus with increasing training set size as all other machine learning models. They used 8000 data points and found out the model is trained sufficiently long before using the entire dataset. Therefore, to avoid over-training the model, we randomly sampled 4145 data entry for LDA model training. We present the result for 10 and 20 topics as shown in Table \ref{result1} and Table \ref{result2}, respectively.
