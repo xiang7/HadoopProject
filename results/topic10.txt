@@ -1,0 +1,10 @@
+0	0.5	time code app ve run test start problem program process data memory thread running application log stop back mode 
+1	0.5	page html php form http jquery javascript code post url net request asp browser user ajax link pages work 
+2	0.5	file error code xml line python string script output files command read text message php found work problem format 
+3	0.5	windows server file project files system version error directory machine running web install folder build installed run visual linux 
+4	0.5	class object method function code array call type return variable called error create instance objects string set list property 
+5	0.5	user app application server api client google access web users ve don facebook make domain ip site password work 
+6	0.5	number question set amp frac mathbb find int sum point order left function matrix book star space numbers problem 
+7	0.5	java org server android apache eclipse http port sun core attrs application impl service hibernate device jar socket invoke 
+8	0.5	data database table sql id query list row column mysql create field select add tables user values date number 
+9	0.5	view image button text code screen images problem display click change add background menu make window tab layout set 
