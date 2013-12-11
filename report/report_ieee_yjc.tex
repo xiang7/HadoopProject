@@ -505,17 +505,27 @@ L = \sum_{k=1}^{K}E[\log p(\overrightarrow{\beta}_{k}|\eta)]+
 \end{split}
 \end{equation}
 
-Coordinate Ascent algorithm is used to iteratively optimize the variational parameters until the objective function converges. A high level view of Coordinate Ascent algorithm is summarized as below \cite{caa}. 
+Coordinate Ascent algorithm is used to iteratively optimize the variational parameters until the objective function converges. A high level view of Coordinate Ascent algorithm is summarized \cite{caa}. 
 \begin{algorithm}
 \caption{Coordinate Ascent Algorithm}
 \label{alg:lda}
 \begin{algorithmic}
     \REQUIRE Initialize global parameters $\lambda$
 \REPEAT
-    \FOR{each document $d \in \{1,\ldots,D\}$}
-	\STATE{Update document-specific variational distributions}
+    \FOR{each topic $k$ and word $v$}
+	\STATE{$\lambda_{k,v}^{(t+1)}=\eta+\sum_{d=1}^D\sum_{n=1}^N{1(w_{d,n}=v)\phi_{n,k}^{(t)}}$}
     \ENDFOR
-    \STATE{Update global parameters $\lambda$}
+    \FOR{each document $d \in \{1,\ldots,D\}$}
+	\STATE{$\gamma_{d,k}^{(t+1)}=\alpha_k+\sum_{n=1}^N{\phi_{d,n,k}^{(t)}}$}
+		\FOR{each word $n$}
+		\STATE{$\phi_{d,n,k}^{(t+1)} \propto \left\lbrace \Phi(\gamma_{d,k}^{(t+1)})+ \Phi(\lambda_{k,w_n}^{(t+1)})-\Phi(lambda_{k,v}^{(t+1)}) \right\rbrace $}
+    		\ENDFOR    
+    \ENDFOR
+\STATE{Update the parameters}
+\STATE{$\hat{\beta}_{k,v} = \frac{\lambda}{\sum_{v'=1}^V{\lambda_{k,v'}}}$}
+\STATE{$\hat{\theta}_{d,k} = \frac{\gamma_{d,k}}{\sum_{k'=1}^K{\gamma_{d,k'}}}$}
+\STATE{$\hat{z}_{d,n,k} = \phi_{d,n,k}$}
+
 \UNTIL{Convergence}
 \end{algorithmic}
 \end{algorithm}
@@ -530,7 +540,7 @@ Coordinate Ascent algorithm is used to iteratively optimize the variational para
 
 \section{MapReduce for Latent Dirichlet Allocation}
 
-As shown in Table \ref{lda_comp}, a comparison of different approaches for LDA was summarized \cite{zhai2012mr}.
+As shown in Table \ref{lda_comp}, a comparison of different approaches for LDA was summarized \cite{zhai2012mr}. From the table, we can see that pLDA, Mahout, and Mr.LDA were implemented in the MapReduce paradigm. 
 
 \begin{table}[!t]
 \caption{A comparison of different approaches for LDA}
@@ -548,6 +558,41 @@ Mahout \cite{mahout_lda}   & MapReduce        & Variational Bayesian          \\
 Mr. LDA \cite{zhai2012mr}   & MapReduce        & Variational Bayesian         \\\hline
 \end{tabular}
 \end{table}
+
+For the implementation of Mahout, it regards the variational inference as a generation of Expectation Maximization (EM) algorithm for hierarchical Bayesian models. Therefore, for the E step, it infers the posterior probability of each topic for each word for all the documents in the collection. Then, it emits the statistics for each word in each topic. For the M step, it sums and normalizes the statistics, therefore we can get the distribution of the corpus for each topic. These two steps were implemented in Mapper and Reducer, respectively \cite{mahout_lda}. 
+
+\begin{algorithm}
+\caption{Mapper}
+\label{alg:lda_map}
+\begin{algorithmic}
+\STATE{\textbf{Key} - document ID $d\in \{1,\ldots,D\}$}
+\STATE{\textbf{Value} - document content}
+\REQUIRE Initialize global parameters $\lambda$
+    \FOR{each topic $k$ and word $v$}
+	\STATE{$\lambda_{k,v}^{(t+1)}=\eta+\sum_{d=1}^D\sum_{n=1}^N{1(w_{d,n}=v)\phi_{n,k}^{(t)}}$}
+	\STATE{\textbf{Emit $\lambda_{k,v}^{(t+1)}$}}
+    \ENDFOR
+    \FOR{each document $d \in \{1,\ldots,D\}$}
+	\STATE{$\gamma_{d,k}^{(t+1)}=\alpha_k+\sum_{n=1}^N{\phi_{d,n,k}^{(t)}}$}
+		\FOR{each word $n$}
+		\STATE{$\phi_{d,n,k}^{(t+1)} \propto \left\lbrace \Phi(\gamma_{d,k}^{(t+1)})+ \Phi(\lambda_{k,w_n}^{(t+1)})-\Phi(lambda_{k,v}^{(t+1)}) \right\rbrace $}
+		\STATE{\textbf{Emit $\phi_{d,n,k}^{(t+1)}$}}
+    		\ENDFOR
+    		\STATE{\textbf{Emit $\gamma_{d,k}^{(t+1)}$}}
+    \ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Reducer}
+\label{alg:lda_reduce}
+\begin{algorithmic}
+\STATE{\textbf{Calculate}}
+\STATE{$\hat{\beta}_{k,v} = \frac{\lambda}{\sum_{v'=1}^V{\lambda_{k,v'}}}$}
+\STATE{$\hat{\theta}_{d,k} = \frac{\gamma_{d,k}}{\sum_{k'=1}^K{\gamma_{d,k'}}}$}
+\STATE{$\hat{z}_{d,n,k} = \phi_{d,n,k}$}
+\end{algorithmic}
+\end{algorithm}
 
 \section{Experiment}
 \subsection{Dataset}
@@ -687,8 +732,8 @@ Due to the nature of the stack overflow platform, the posts come in various form
 
 \begin{itemize}
 	\item \textbf{Retrieve related fields.} The original data comes in a csv file with four fields for each record: id, title, body, tag. Since we want to find out the popular topics among the posts, we want to use the text-rich segments (title and body). Tag is essentially the topic in a sense (tags are mostly about what technology the post is asking like a certain programming language). This can be used as the gold standard later to evaluate the topics we found. Thus, we eliminate them for the training process. 
-	\item \textbf{Remove contents in <code></code>.} The <code></code> tag contains a lot of mathematical formulations, machine generated text etc. Since they're not helpful in finding topics, we eliminate them.
-	\item \textbf{Remove tags.} Tags like <p></p> have a large frequency whereas they have no contribution to any topics. So they're all removed.
+	\item \textbf{Remove contents} in \verb+<code></code>+. The \verb+<code></code>+ tag contains a lot of mathematical formulations, machine generated text etc. Since they're not helpful in finding topics, we eliminate them.
+	\item \textbf{Remove tags.} Tags like \verb+<p></p>+ have a large frequency whereas they have no contribution to any topics. So they're all removed.
 	\item \textbf{Remove punctuations.} Removing punctuations helps greatly with reducing the feature space. If punctuations are not removed, "happy", "happy." and "happy," would be regarded as different words whereas they should be the same.
 	\item \textbf{Lowercase the text.} Lowercase the entire text also helps with reducing feature space since otherwise "happy" and "hapPy" would be regarded as different.
 	\item \textbf{Remove newlines and excessive white spaces.}. Since the preprocessed text will be fed into mahout later and text is segmented into words by white space in mahout. Therefore, this would guarantee mahout segments words correctly.
