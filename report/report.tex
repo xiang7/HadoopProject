@@ -56,6 +56,29 @@ Describes how we set up our 6 node hadoop cluster.
 
 \subsection{Results}
 
+\section{LDA Topics}
+
+We ran the LDA on the preprocessed text. We do a sampling during preprocessing the text because using all the entries for training a LDA model would be too much both in terms of storage space and also time. Further, according to Blei etc. \cite{blei2003latent}, LDA model performance plateaus with increasing training set size as all other machine learning models. They used 8000 data points and foound out the model is trained sufficiently long before using the entire dataset. Therefore, to avoid over-training the model, we randomly sampled 4145 data entry for LDA model training. We present the result for 10 topics as below:
+
+
+\begin{center}
+  \begin{tabular}{| l | l | l |}
+    \hline
+    Topic number & Top 10 words & Topic summary \\ \hline
+    1 & time code run test start program process data memory thread & Program testing, measuring \\ \hline
+    2 & page html php form http jquery javascript post url request & Web programing \\ \hline
+    3 & file error code xml line python string script output files  & N/A \\ \hline
+    4 & windows server system version error directory install folder build linux & System programming \\ \hline
+    5 & class object method function array call type return variable instance & OOP \\ \hline
+    6 & number question set amp frac mathbb find int sum point & N/A \\ \hline
+    7 & java server android apache eclipse http sun attrs hibernate jar & Java \\ \hline
+    8 & data database table sql id query list row column mysql & Database \\ \hline
+    9 & view image button text images display click background menu layout & HTML programming \\ \hline
+    10 & user app application server api client google access facebook & App \\
+    \hline
+  \end{tabular}
+\end{center}
+
 \section{Conclusion}
 \bibliographystyle{plain}
 \bibliography{ref}
