@@ -349,6 +349,8 @@
 
 \usepackage{verbatim}
 \usepackage{amsmath}
+\usepackage{graphicx}
+
 \begin{document}
 %
 % paper title
@@ -435,8 +437,13 @@ The abstract goes here.
 
 
 \section{Introduction}
-With the exponential growth of data, it would be efficient for people to understand an area by extracting the topics from millions of documents. Latent Dirichlet Allocation (LDA) is a statistical model that discovers underlying topics from a collection of documents \cite{blei2003latent}. LDA assumes that the documents are generated from multiple topics, of which a topic is an distribution over a fixed size of words. For each document, it contains the topics with different proportions. Therefore, the words in the document are actually generated from several distributions of the topics. For example, a document might include topics of hadoop and machine learning, therefore it is not reasonable to treat the document as a single topic \cite{srivastava2010text}. However, the large scale data might limit the use of LDA due to the expensive computations. Meanwhile, Hadoop is an open source software for processing large scale data on computer clusters. It provides a programming paradigm called MapReduce that allows researchers easily write applications to run on the clusters. In this project, we extracted the topics from a corpus collected from Stack Overflow using LDA on a hadoop cluster. 
+With the exponential growth of data, it would be efficient for people to understand an area by extracting the topics from millions of documents. Latent Dirichlet Allocation (LDA) is a statistical model that discovers underlying topics from a collection of documents \cite{blei2003latent}. LDA assumes that the documents are generated from multiple topics, of which a topic is an distribution over a fixed size of words. For each document, it contains the topics with different proportions. Therefore, the words in the document are actually generated from several distributions of the topics. For example, a document might include topics of hadoop and machine learning, therefore it is not reasonable to treat the document as a single topic \cite{srivastava2010text}. LDA has been used in various applications including scientific texts \cite{blei2003latent,griffiths2004finding}, twitters \cite{zhao2011comparing,hong2010empirical}, online reviews \cite{titov2008modeling}, blog posts \cite{yano2009predicting}, emails \cite{mccallum2005topic}, and newspaper \cite{wei2006lda}. Furthermore, many variants of LDA have been proposal including Hierarchical Topic Models (HLDA) \cite{griffiths2004hierarchical,blei2010nested}, Supervised Topic Models (sLDA) \cite{blei2010supervised}, Labeled LDA (LLDA) \cite{ramage2009labeled}, Correlated Topic Models (CTM) \cite{lafferty2005correlated,blei2007correlated}, Dynamic Topic Model \cite{blei2006dynamic} and so on. However, the large scale data might limit the use of LDA due to the expensive computations. Meanwhile, Hadoop is an open source software for processing large scale data on computer clusters. It provides a programming paradigm called MapReduce that allows researchers easily write applications to run on the clusters.
+
+
+To improve the scalability of LDA, a parallelized LDA algorithm was in Mapreduce Framework, which used variational inference rather than Gibbs sampling for approximation \cite{zhai2012mr}. Mahout, which is an open source software for scalable machine learning, implements Collapsed Variational Bayes (CVM) algorithm that takes the advantage of both Variational Bayes and Gibbs Sampling for LDA using the Mapreduve paradigm \cite{mahout_lda}. In this project, we extracted the topics from a corpus collected from Stack Overflow using the parallelized LDA on a hadoop cluster. 
+
 \section{Latent Dirichlet Allocation}
+
 Denote K as the number of topics, V as the size of the vocabulary, $\overrightarrow{\alpha}$ as a positive vector, and $\eta$ as a scalar. Therefore, for each topic, its distribution over the vocabulary is
 \begin{equation}
 \overrightarrow{\beta}_k \sim Dir_V(\eta)
@@ -452,14 +459,14 @@ Z_{d,n} \sim Mult(\overrightarrow{\theta}_d), Z_{d,n} \in \{1,\ldots, K\}
 \begin{equation}
 W_{d,n} \sim Mult(\overrightarrow{\beta}_{z_{d,n}}), W_{d,n} \in \{1,\ldots,V\} 
 \end{equation}
-LDA is a generative model, which provides a joint distribution over observations and hidden variables. Given a collection of documents (D), the posterior distribution of the hidden variables is
+A graphical model of LDA is shown in Figure \ref{gm_lda}. In addition, LDA is a generative model, which provides a joint distribution over observations and hidden variables. Given a collection of documents (D), the posterior distribution of the hidden variables is
 \begin{equation}
 \begin{split}
 p(\overrightarrow{\theta}_{1:D},z_{1:D,1:N},\overrightarrow{\beta}_{1:K}|w_{1:D,1:N},\alpha,\eta)= \\[10pt]
 \frac{p(\overrightarrow{\theta}_{1:D},\overrightarrow{z}_{1:D},\overrightarrow{\beta}_{1:K}|\overrightarrow{w}_{1:D},\alpha,\eta)}{\int_{\overrightarrow{\beta}_{1:K}}\int_{\overrightarrow{\theta}_{1:D}}\sum_{z}{p(\overrightarrow{\theta}_{1:D},\overrightarrow{z}_{1:D},\overrightarrow{\beta}_{1:K}|\overrightarrow{w}_{1:D},\alpha,\eta)}}
 \end{split}
 \end{equation} 
-Given the posterior distribution, the probability of a word based on topics $\hat{\beta}_{k,v}$, the proportion of topics in a document $\hat{\theta}_{d,k}$, and the topic assignment of a word $\hat{z}_{d,n,k}$ can be calculated as below.
+Given the posterior distribution, the probability of a word based on topics $\hat{\beta}_{k,v}$, the proportion of topics in a document $\hat{\theta}_{d,k}$, and the topic assignment of a word $\hat{z}_{d,n,k}$  can be calculated as below.
 \begin{equation}
 \begin{split}
 \hat{\beta}_{k,v} = E[\beta_{k,v}|w_{1:D,1:N}]\\
@@ -467,11 +474,60 @@ Given the posterior distribution, the probability of a word based on topics $\ha
 \hat{z}_{d,n,k} = E[Z_{d,n,k}|w_{1:D,1:N}]
 \end{split}
 \end{equation}
-However, the distribution can not be solved in a polynomial time because of the integrals. 
+However, the distribution can not be solved in a polynomial time because of the integrals. Therefore, approximation methods are used to address this computational problem. Several approximation methods have been proposed for LDA including Gibbs sampling \cite{steyvers2007probabilistic}, mean field variational inference \cite{blei2003latent}, collapsed variational inference \cite{teh2006collapsed}, and expectation propagation \cite{minka2002expectation}. In this study, we are focusing on the variational inference approach for LDA.
+
+
+The mean field variational inference
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=5in]{lda.png}
+\caption{A Graphical Model of LDA}
+\label{gm_lda}
+\end{figure*}
+
 \section{MapReduce for Latent Dirichlet Allocation}
+
+As shown in Table \ref{lda_comp}, a comparison of different approaches for LDA was summarized \cite{zhai2012mr}.
+
+\begin{table}[!t]
+\caption{A comparison of different approaches for LDA}
+\label{lda_comp}
+\centering
+\begin{tabular}{lll}\hline
+Approach  & Framework        & Inference                     \\ \hline
+Mallet    & Multi-thread     & Gibbs                         \\
+GPU-LDA   & GPU              & Gibss \& Variational Bayesian \\
+Async-LDA & Multi-thread     & Gibbs                         \\
+N.C.L.    & Master-Slave     & Variational Bayesian          \\
+pLDA      & MPI \& MapReduce & Gibbs                         \\
+Y!LDA     & Hadoop           & Gibbs                         \\
+Mahout    & MapReduce        & Variational Bayesian          \\
+Mr. LDA   & MapReduce        & Variational Bayesian         \\\hline
+\end{tabular}
+\end{table}
+
 \section{Experiment}
 \subsection{Dataset}
-The dataset of this project is obtained from Kaggle (www.kaggle.com), which is a platform for data analysis and prediction competitions. The data that we use are posted by Facebook for a keyword extraction competition. The dataset consists the files both for training and testing, of which the training file contains four columns id, title, body, and tags. In this project, only the title and body are used to extract the topics.\\[10pt]
+The dataset of this project is obtained from Kaggle (www.kaggle.com), which is a platform for data analysis and prediction competitions. The data that we use are posted by Facebook for a keyword extraction competition. The dataset consists the files both for training and testing, of which the training file contains four attributes - id, title, body, and tags. In this project, only the title and body are used to extract the topics. A summary of the dataset is shown as below.
+\begin{itemize}
+\item Size: 7.3 GB
+\item Number of texts: 6,034,195
+\item Number of unique tags: 42048
+\item Top 10 tags:\\
+\begin{verbatim}
+c# 463526
+java 412189
+php 392451
+javascript 365623
+android 320622
+jquery 305614
+c++ 199280
+python 184928
+iphone 183573
+asp.net 177334
+\end{verbatim}
+\end{itemize}
 Example:
 \begin{quote}
 
@@ -725,21 +781,9 @@ The authors would like to thank...
 % <OR> manually copy in the resultant .bbl file
 % set second argument of \begin to the number of references
 % (used to reserve space for the reference number labels box)
-\begin{thebibliography}{1}
 
-\bibitem{blei2003latent}
-David~M Blei, Andrew~Y Ng, and Michael~I Jordan.
-\newblock Latent dirichlet allocation.
-\newblock {\em the Journal of machine Learning research}, 3:993--1022, 2003.
-
-\bibitem{srivastava2010text}
-Ashok Srivastava and Mehran Sahami.
-\newblock {\em Text mining: Classification, clustering, and applications}.
-\newblock CRC Press, 2010.
-
-
-\end{thebibliography}
-
+\bibliography{ref}
+\bibliographystyle{plain}
 
 
 
