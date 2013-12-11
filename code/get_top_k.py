@@ -21,7 +21,7 @@ for line in f:
 			continue;
 		if s_split[0] not in dic:
 			dic[s_split[0]]=float(s_split[1])
-	sorted_x = sorted(dic.iteritems(), key=operator.itemgetter(1)) 
+	sorted_x = reversed(sorted(dic.iteritems(), key=operator.itemgetter(1)))
 	i=10
 	result=[]
 	for w in sorted_x:
