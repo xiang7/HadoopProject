@@ -356,7 +356,7 @@
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{Bare Demo of IEEEtran.cls for Conferences}
+\title{A Study of Latent Dirichlet Allocation using MapReduce}
 
 
 % author names and affiliations
@@ -411,7 +411,7 @@ Email: yan114@purdue.edu}}
 
 \begin{abstract}
 %\boldmath
-The abstract goes here.
+Topic models, as a powerful tool to discover underlying topics, have been widely applied in many areas such as scientific texts, twitters, online reviews, blog posts, emails, and newspaper. One of the most popular topic models called Latent Dirichlet Allocation (LDA) has attracted tremendous interests. However, the large scale data might limit the use of LDA due to the expensive computations. Meanwhile, Hadoop is an open source software for processing large scale data on computer clusters. It provides a programming paradigm called MapReduce that allows researchers easily write applications to run on the clusters. In this project, we studied a parallelized LDA algorithm using Mapreduce Framework. In addition, we ran an experiment on the cluster using the LDA to find interesting topics of Stackoverflow, which is a website for technical Q\&A.
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -438,7 +438,7 @@ The abstract goes here.
 
 
 \section{Introduction}
-With the exponential growth of data, it would be efficient for people to understand an area by extracting the topics from millions of documents. Latent Dirichlet Allocation (LDA) is a statistical model that discovers underlying topics from a collection of documents \cite{blei2003latent}. LDA assumes that the documents are generated from multiple topics, of which a topic is an distribution over a fixed size of words. For each document, it contains the topics with different proportions. Therefore, the words in the document are actually generated from several distributions of the topics. For example, a document might include topics of hadoop and machine learning, therefore it is not reasonable to treat the document as a single topic \cite{srivastava2010text}. LDA has been used in various applications including scientific texts \cite{blei2003latent,griffiths2004finding}, twitters \cite{zhao2011comparing,hong2010empirical}, online reviews \cite{titov2008modeling}, blog posts \cite{yano2009predicting}, emails \cite{mccallum2005topic}, and newspaper \cite{wei2006lda}. Furthermore, many variants of LDA have been proposal including Hierarchical Topic Models (HLDA) \cite{griffiths2004hierarchical,blei2010nested}, Supervised Topic Models (sLDA) \cite{blei2010supervised}, Labeled LDA (LLDA) \cite{ramage2009labeled}, Correlated Topic Models (CTM) \cite{lafferty2005correlated,blei2007correlated}, Dynamic Topic Model \cite{blei2006dynamic} and so on. However, the large scale data might limit the use of LDA due to the expensive computations. Meanwhile, Hadoop is an open source software for processing large scale data on computer clusters. It provides a programming paradigm called MapReduce that allows researchers easily write applications to run on the clusters.
+With the exponential growth of data, it would be efficient for people to understand an area by extracting the topics from millions of documents. Latent Dirichlet Allocation (LDA) is a statistical model that discovers underlying topics from a collection of documents \cite{blei2003latent}. LDA assumes that the documents are generated from multiple topics, of which a topic is an distribution over a fixed size of words. For each document, it contains the topics with different proportions. Therefore, the words in the document are actually generated from several distributions of the topics. For example, a document might include topics of hadoop and machine learning, therefore it is not reasonable to treat the document as a single topic \cite{srivastava2010text}. LDA has been used in various applications including scientific texts \cite{blei2003latent,griffiths2004finding}, twitters \cite{zhao2011comparing,hong2010empirical}, online reviews \cite{titov2008modeling}, blog posts \cite{yano2009predicting}, emails \cite{mccallum2005topic}, and newspaper \cite{wei2006lda}. Furthermore, many variants of LDA have been proposed including Hierarchical Topic Models (HLDA) \cite{griffiths2004hierarchical,blei2010nested}, Supervised Topic Models (sLDA) \cite{blei2010supervised}, Labeled LDA (LLDA) \cite{ramage2009labeled}, Correlated Topic Models (CTM) \cite{lafferty2005correlated,blei2007correlated}, Dynamic Topic Model \cite{blei2006dynamic} and so on. However, the large scale data might limit the use of LDA due to the expensive computations. Meanwhile, Hadoop is an open source software for processing large scale data on computer clusters. It provides a programming paradigm called MapReduce that allows researchers easily write applications to run on the clusters.
 
 
 To improve the scalability of LDA, a parallelized LDA algorithm was in Mapreduce Framework, which used variational inference rather than Gibbs sampling for approximation \cite{zhai2012mr}. Mahout, which is an open source software for scalable machine learning, implements Collapsed Variational Bayes (CVM) algorithm that takes the advantage of both Variational Bayes and Gibbs Sampling for LDA using the Mapreduve paradigm \cite{mahout_lda}. In this project, we extracted the topics from a corpus collected from Stack Overflow using the parallelized LDA on a hadoop cluster. 
@@ -739,9 +739,61 @@ Due to the nature of the stack overflow platform, the posts come in various form
 	\item \textbf{Remove newlines and excessive white spaces.}. Since the preprocessed text will be fed into mahout later and text is segmented into words by white space in mahout. Therefore, this would guarantee mahout segments words correctly.
 \end{itemize}
 
+\subsection{Experiment}
+
 \subsection{Results}
 
+We ran the LDA on the preprocessed text. We do a sampling during preprocessing the text because using all the entries for training a LDA model would be too much both in terms of storage space and also time. Further, according to Blei etc. \cite{blei2003latent}, LDA model performance plateaus with increasing training set size as all other machine learning models. They used 8000 data points and found out the model is trained sufficiently long before using the entire dataset. Therefore, to avoid over-training the model, we randomly sampled 4145 data entry for LDA model training. We present the result for 10 and 20 topics as shown in Table \ref{result1} and Table \ref{result2}, respectively.
 
+\begin{table*}[!t]
+\caption{Results of LDA for 10 topics}
+\label{result1}
+\centering
+  \begin{tabular}{ l  l  l }
+    \hline
+    Topic number & Top 10 words & Topic summary \\ \hline
+    1 & time code run test start program process data memory thread & Program testing, measuring \\ 
+    2 & page html php form http jquery javascript post url request & Web programing \\ 
+    3 & file error code xml line python string script output files  & N/A \\ 
+    4 & windows server system version error directory install folder build linux & System programming \\ 
+    5 & class object method function array call type return variable instance & OOP \\ 
+    6 & number question set amp frac mathbb find int sum point & N/A \\ 
+    7 & java server android apache eclipse http sun attrs hibernate jar & Java \\ 
+    8 & data database table sql id query list row column mysql & Database \\ 
+    9 & view image button text images display click background menu layout & HTML programming \\ 
+    10 & user app application server api client google access facebook & App \\
+    \hline
+  \end{tabular}
+\end{table*}
+
+\begin{table*}[!t]
+\caption{Results of LDA for 20 topics}
+\label{result2}
+\centering
+\begin{tabular}{ll}\hline
+Topic number & Topic words                                                                                                                                        \\\hline
+1            & server client network connection ip remote machine connect domain windows internet port access host set running servers address problem            \\
+2            & application project xml web code android app library net build studio visual file system ui development source dll solution                        \\
+3            & class object method type function code instance objects call create called methods variable classes context properties variables reference created \\
+4            & image images star problem repository size pdf solution svn show git bar don add epsilon http photo png merge                                       \\
+5            & button form user event click code list control tab item add selected menu text page change select input custom                                     \\
+6            & frac mathbb sum amp attrs matrix function left times question show int vector points set space text order end                                      \\
+7            & time process memory thread run application start running code device stop task mode app android threads long service play                          \\
+8            & page html php jquery javascript code http ajax content pages css js link post function url plugin working work                                     \\
+9            & windows test install version run bit ve installed system running package cache dev rails os fine tests unit ubuntu                                 \\
+10           & java org server apache sun impl core eclipse hibernate http jar invoke tomcat jersey postgresql rules loader lang method                           \\
+11           & table database sql data query id column mysql row tables db columns category order rows update insert server select                                \\
+12           & error code message service exception problem send call email fine works ve wrong string return mail case returns function                          \\
+13           & data time date store ve format save read customer correct location appreciated report json field sort point back convert                           \\
+14           & group node child number root set language add graph filter good book attributes list attribute xxxxxxxx tree lt english                            \\
+15           & question ve find make don good problem simple time lot found answer questions work solution bit idea thing edit                                    \\
+16           & array string code function values number python variable loop key numbers simple characters output return find result input replace                \\
+17           & file files command script directory error folder line program copy run output work path found python read doesn windows                            \\
+18           & user web app api request login users google site http facebook session access password application url create post browser                         \\
+19           & view method app controller model iphone set action remove length ios object null code failed mvc check nbsp problem                                \\
+20           & screen text layout code background left change color display problem top bar line content cell don width image size  \\ \hline                             
+\end{tabular}
+\end{table*}
 % An example of a floating figure using the graphicx package.
 % Note that \label must occur AFTER (or within) \caption.
 % For figures, \caption should occur after the \includegraphics.
@@ -827,7 +879,7 @@ Due to the nature of the stack overflow platform, the posts come in various form
 
 
 \section{Conclusion}
-The conclusion goes here.
+In this project, we studied Latent Dirichlet Allocation using MapReduce. An experiment was conducted to discover the underlying topics of Stackoverflow using LDA. The results showed that LDA successfully extracted some interesting topics.
 
 
 
@@ -836,11 +888,7 @@ The conclusion goes here.
 
 
 % use section* for acknowledgement
-\section*{Acknowledgment}
-
-
-The authors would like to thank...
-
+%\section*{Acknowledgment}
 
 
 
