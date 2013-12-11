@@ -1,2 +1,2 @@
 all:
-	pdflatex report.tex
+	pdflatex report_ieee.tex
