@@ -556,6 +556,8 @@ local</value>
 
 Describes the steps we take to do data cleaning.
 
+keep only title and body  ("id","title","body","tags"'\n' all fields can have newlines within)
+
 remove content within \verb+<code>+
 
 remove tags \verb+"<[^>]*>"+
@@ -566,9 +568,13 @@ Remove new lines \verb+"\n" to ""+
 
 Remove multiple white spaces \verb-"\s+" to " "-
 
-Remove words shorter than length 3
-
 Turn all letters to lowercase
+
+algorithm:
+
+getField - read one field with staring " and ending ", don't stop when "" is met
+
+getField four times and the ending new line. ignore the first and the last. for the two fields left, run the steps above
 
 
 \subsection{Latent Dirichlet Allocation}
